@@ -97,6 +97,7 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=256, unique=True, verbose_name='Логин')
+    email = models.EmailField(verbose_name='Почта')
     firstname = models.CharField(max_length=256, blank=True, verbose_name='Имя')
     lastname = models.CharField(max_length=256, blank=True, verbose_name='Фамилия')
     bio = models.TextField(blank=True, verbose_name='Био')
@@ -112,6 +113,7 @@ class CustomUser(AbstractUser):
     password = models.CharField(max_length=256, verbose_name='Пароль')
 
     USERNAME_FIELD = 'username'
+    EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = CustomUserManager()
 

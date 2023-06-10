@@ -9,7 +9,10 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+from datetime import timedelta
 
+import django
+from django.utils.translation import gettext
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,9 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'graphene_django',
+    'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
+    'graphql_auth',
+    'django_filters',
     'rest_framework',
     'rest_framework.authtoken',
-    'djoser',
     'corsheaders',
     'users.apps.UsersConfig',
 ]
@@ -149,14 +155,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-DJOSER = {
-    'SERIALIZERS': {
-        # 'user': 'users.serializers.CustomUserSerializer',
-        # 'current_user': 'users.serializers.CustomUserSerializer',
-        # 'user_create': 'users.serializers.UserRegistrationSerializer',
-    },
-}
-
 CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_CREDENTIALS = True
@@ -181,3 +179,35 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+GRAPHENE = {
+    'SCHEMA': 'inverse.schema.schema',
+    'MIDDLEWARE': [
+        'graphql_jwt.middleware.JSONWebTokenMiddleware',
+    ],
+}
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'graphql_auth.backends.GraphQLAuthBackend'
+]
+
+GRAPHQL_JWT = {
+    "JWT_ALLOW_ANY_CLASSES": [
+        "graphql_auth.mutations.Register",
+        "graphql_auth.mutations.VerifyAccount",
+        "graphql_auth.mutations.ObtainJSONWebToken",
+    ],
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+GRAPHQL_AUTH = {
+    'LOGIN_ALLOWED_FIELDS': ['username', 'email'],
+    'REGISTER_MUTATION_FIELDS': ['username', 'email', 'password1', 'password2'],
+}
+
+
