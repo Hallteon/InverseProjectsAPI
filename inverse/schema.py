@@ -1,4 +1,5 @@
 import graphene
+import users.schema
 from graphql_auth.schema import UserQuery, MeQuery
 from graphql_auth import mutations
 
@@ -14,7 +15,7 @@ class AuthMutation(graphene.ObjectType):
     password_change = mutations.PasswordChange.Field()
 
 
-class Query(UserQuery, MeQuery, graphene.ObjectType):
+class Query(UserQuery, MeQuery, users.schema.Query, graphene.ObjectType):
     pass
 
 
