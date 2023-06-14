@@ -16,10 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path, include
-
+from projects.views import ProjectAPIRetrieveView, ProjectAPIListCreateView, ProjectAPIUpdateView, \
+    ProjectAPIDestroyView, ProjectAPIMyListView, ProjectAPISendInviteView
+from users.views import SkillAPIListCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/projects/', ProjectAPIListCreateView.as_view()),
+    path('api/projects/my/', ProjectAPIMyListView.as_view()),
+    path('api/projects/<int:pk>/', ProjectAPIRetrieveView.as_view()),
+    path('api/projects/<int:pk>/update/', ProjectAPIUpdateView.as_view()),
+    path('api/projects/<int:pk>/delete/', ProjectAPIDestroyView.as_view()),
+    path('api/projects/<int:project_pk>/invites/send/<int:user_pk>/', ProjectAPISendInviteView.as_view()),
+    path('api/users/skills/', SkillAPIListCreateView.as_view()),
     path('api/users/auth/', include('djoser.urls')),
     re_path(r'^api/users/auth/', include('djoser.urls.authtoken'))
 ]

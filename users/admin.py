@@ -3,13 +3,13 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.apps import apps
 from users.forms import UserChangeForm, UserCreationForm
-from users.models import CustomUser, Skill, Role, Invite, Achievement, Organization
+from users.models import CustomUser, Skill, Role, Achievement, Organization
 
 
 class SkillAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'type')
-    list_filter = ('id', 'type')
-    search_fields = ('id', 'name', 'type')
+    list_display = ('id', 'name', 'skill_type')
+    list_filter = ('id', 'skill_type')
+    search_fields = ('id', 'name', 'skill_type')
 
 
 class RoleAdmin(admin.ModelAdmin):
@@ -18,15 +18,9 @@ class RoleAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
-class InviteAdmin(admin.ModelAdmin):
-    list_display = ('from_user', 'message', 'accepted')
-    list_filter = ('from_user', 'message', 'accepted')
-    search_fields = ('from_user',)
-
-
 class AchievementAdmin(admin.ModelAdmin):
-    list_display = ('title', 'type', 'file')
-    list_filter = ('title', 'type')
+    list_display = ('title', 'achieve_type')
+    list_filter = ('title', 'achieve_type')
     search_fields = ('title',)
 
 
@@ -40,7 +34,7 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open', 'contacts',
+    list_display = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open', 'contacts',
                     'organization', 'is_superuser')
     list_filter = ('is_superuser',)
     fieldsets = (
@@ -61,7 +55,6 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.register(Skill, SkillAdmin)
 admin.site.register(Role, RoleAdmin)
-admin.site.register(Invite, InviteAdmin)
 admin.site.register(Achievement, AchievementAdmin)
 admin.site.register(Organization, OrganizationAdmin)
 admin.site.register(CustomUser, UserAdmin)

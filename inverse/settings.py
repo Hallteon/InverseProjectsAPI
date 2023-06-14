@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'djoser',
     'corsheaders',
     'users.apps.UsersConfig',
+    'projects.apps.ProjectsConfig',
+    'teams.apps.TeamsConfig'
 ]
 
 MIDDLEWARE = [

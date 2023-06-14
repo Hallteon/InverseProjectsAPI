@@ -1,20 +1,15 @@
 from django.db import models
 from users.models import CustomUser
-
-
-class Group(models.Model):
-    members = models.ManyToManyField(CustomUser, verbose_name='Участники')
-    teamlead = models.ForeignKey(CustomUser, blank=True, null=True, on_delete=models.DO_NOTHING, verbose_name='Тимлид')
-
-    class Meta:
-        verbose_name = 'Группа'
-        verbose_name_plural = 'Группы'
+from django_currentuser.db.models import CurrentUserField
 
 
 class Project(models.Model):
     name = models.CharField(max_length=256, verbose_name='Название')
     description = models.TextField(verbose_name='Описание')
-    mentor = models.ForeignKey(CustomUser, verbose_name='Наставник')
+    members = models.ManyToManyField(CustomUser, blank=True, related_name='groups_member', verbose_name='Участники')
+    teamlead = CurrentUserField(on_delete=models.DO_NOTHING, verbose_name='Тимлид')
+    mentor = models.ForeignKey(CustomUser, blank=True, null=True, related_name='projects_mentor', on_delete=models.DO_NOTHING, verbose_name='Наставник')
+    invites = models.ManyToManyField(CustomUser, blank=True, related_name='projects_invites', verbose_name='Приглашения')
     open = models.BooleanField(default=True, verbose_name='Открытый проект')
 
     class Meta:

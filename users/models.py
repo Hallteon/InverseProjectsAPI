@@ -17,7 +17,7 @@ class Role(models.Model):
 
 class Skill(models.Model):
     name = models.CharField(max_length=256, verbose_name='Название')
-    type = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(2)], verbose_name='Тип')
+    skill_type = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(2)], verbose_name='Тип')
 
     def __str__(self):
         return self.name
@@ -27,23 +27,9 @@ class Skill(models.Model):
         verbose_name_plural = 'Навыки'
 
 
-class Invite(models.Model):
-    from_user = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, verbose_name='Отправитель')
-    message = models.TextField(verbose_name='Сообщение')
-    accepted = models.BooleanField(null=True, verbose_name='Принято')
-
-    def __str__(self):
-        return self.from_user
-
-    class Meta:
-        verbose_name = 'Приглашение'
-        verbose_name_plural = 'Приглашения'
-
-
 class Achievement(models.Model):
     title = models.CharField(max_length=256, verbose_name='Название')
-    type = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name='Тип')
-    file = models.FileField(blank=True, verbose_name='Файл')
+    achieve_type = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name='Тип')
 
     def __str__(self):
         return self.title
@@ -103,13 +89,12 @@ class CustomUser(AbstractUser):
     bio = models.TextField(blank=True, verbose_name='Био')
     birthday = models.DateField(blank=True, null=True, verbose_name='День рождения')
     role = models.ForeignKey('Role', blank=True, null=True, on_delete=models.DO_NOTHING, related_name='users', verbose_name='Роль')
-    skills = models.ManyToManyField('Skill', blank=True, related_name='users', verbose_name='Навыки')
+    skills = models.ManyToManyField('Skill', related_name='users_skill', verbose_name='Навыки')
     experience = models.IntegerField(blank=True, default=0, verbose_name='Опыт')
-    invites = models.ManyToManyField('Invite', blank=True, verbose_name='Приглашения')
     open = models.BooleanField(default=False, verbose_name='Открытый профиль')
     contacts = models.TextField(verbose_name='Контакты')
-    achievements = models.ManyToManyField('Achievement', blank=True, verbose_name='Достижения')
-    organization = models.ForeignKey('Organization', blank=True, null=True, on_delete=models.CASCADE, related_name='users', verbose_name='Организация')
+    achievements = models.ManyToManyField('Achievement', verbose_name='Достижения')
+    organization = models.ForeignKey('Organization', blank=True, null=True, on_delete=models.CASCADE, related_name='users_organization', verbose_name='Организация')
     password = models.CharField(max_length=256, verbose_name='Пароль')
 
     USERNAME_FIELD = 'username'
