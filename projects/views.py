@@ -8,9 +8,11 @@ from users.models import CustomUser
 
 
 class ProjectAPIListCreateView(generics.ListCreateAPIView):
-    queryset = Project.objects.filter(open=True)
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(open=True, organization=self.request.user.organization.pk)
 
     def post(self, request, *args, **kwargs):
         serializer = ProjectSerializer(data=request.data)
@@ -19,6 +21,7 @@ class ProjectAPIListCreateView(generics.ListCreateAPIView):
             serializer.save()
             project = Project.objects.get(pk=serializer.data['id'])
 
+            project.organization = self.request.user.organization
             project.members.add(self.request.user.id)
             project.save()
 
@@ -34,9 +37,11 @@ class ProjectAPIMyListView(generics.ListAPIView):
 
 
 class ProjectAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsProjectClosedMember]
+
+    def get_queryset(self):
+        return Project.objects.filter(organization=self.request.user.organization.pk)
 
 
 class ProjectAPIMyInvitesView(generics.ListAPIView):
@@ -58,14 +63,15 @@ class ProjectAPISendInviteView(generics.UpdateAPIView):
         if user_uuid:
             invite_user = CustomUser.objects.get(user_uuid=user_uuid)
 
-            obj.invites.add(invite_user.pk)
-            obj.save()
+            if invite_user.organization.pk == obj.organization.pk:
+                obj.invites.add(invite_user.pk)
+                obj.save()
 
-            serializer = ProjectSerializer(obj, required=False)
+                serializer = ProjectSerializer(obj, required=False)
 
-            return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+                return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
 
-        return Response("You didn't give a user's uuid", status=status.HTTP_400_BAD_REQUEST)
+        return Response("Something went wrong!", status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProjectAPIConfirmInviteView(generics.UpdateAPIView):

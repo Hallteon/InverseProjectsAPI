@@ -30,3 +30,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'skills', 'experience',
                   'open', 'contacts', 'achievements', 'organization')
+
+
+class CustomUserCurrentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'skills', 'experience',
+                  'open', 'contacts', 'achievements', 'organization', 'user_uuid')

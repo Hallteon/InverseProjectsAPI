@@ -3,7 +3,7 @@ from projects.models import Project
 
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'description', 'teamlead', 'mentor', 'open')
+    list_display = ('id', 'name', 'description', 'teamlead', 'mentor', 'open', 'organization')
     list_filter = ('id', 'name', 'open', 'mentor')
     search_fields = ('id', 'name', 'mentor')
 
