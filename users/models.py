@@ -92,7 +92,7 @@ class CustomUser(AbstractUser):
     skills = models.ManyToManyField('Skill', related_name='users_skill', verbose_name='Навыки')
     experience = models.IntegerField(blank=True, default=0, verbose_name='Опыт')
     open = models.BooleanField(default=False, verbose_name='Открытый профиль')
-    contacts = models.TextField(verbose_name='Контакты')
+    contacts = models.TextField(blank=True, verbose_name='Контакты')
     achievements = models.ManyToManyField('Achievement', verbose_name='Достижения')
     organization = models.ForeignKey('Organization', blank=True, null=True, on_delete=models.CASCADE, related_name='users_organization', verbose_name='Организация')
     password = models.CharField(max_length=256, verbose_name='Пароль')

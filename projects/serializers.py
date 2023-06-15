@@ -4,6 +4,7 @@ from users.serializers import CustomUserSerializer
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    members = CustomUserSerializer(many=True, required=False)
     mentor = CustomUserSerializer(required=False)
 
     class Meta:
