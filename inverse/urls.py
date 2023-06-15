@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/projects/my/', ProjectAPIMyListView.as_view()),
     path('api/projects/<int:pk>/', ProjectAPIDetailView.as_view()),
     path('api/projects/invites/my/', ProjectAPIMyInvitesView.as_view()),
-    path('api/projects/<int:project_pk>/invites/send/<int:user_pk>/', ProjectAPISendInviteView.as_view()),
+    path('api/projects/<int:pk>/invites/send/', ProjectAPISendInviteView.as_view()),
     path('api/projects/<int:pk>/invites/confirm/', ProjectAPIConfirmInviteView.as_view()),
     path('api/projects/<int:pk>/invites/reject/', ProjectAPIRejectInviteView.as_view()),
 

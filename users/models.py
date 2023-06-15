@@ -87,7 +87,7 @@ class CustomUser(AbstractUser):
     achievements = models.ManyToManyField('Achievement', verbose_name='Достижения')
     organization = models.ForeignKey('Organization', blank=True, null=True, on_delete=models.CASCADE, related_name='users_organization', verbose_name='Организация')
     password = models.CharField(max_length=256, verbose_name='Пароль')
-    user_uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    user_uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False, verbose_name='UUID')
 
     USERNAME_FIELD = 'username'
     EMAIL_FIELD = 'email'

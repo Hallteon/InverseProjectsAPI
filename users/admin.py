@@ -28,8 +28,8 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('id', 'user_uuid', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open', 'contacts',
-                    'organization', 'is_superuser')
+    list_display = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open', 'contacts',
+                    'organization', 'is_superuser', 'user_uuid')
     list_filter = ('is_superuser',)
     fieldsets = (
         (None, {'fields': ('username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open',

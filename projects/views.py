@@ -52,15 +52,20 @@ class ProjectAPISendInviteView(generics.UpdateAPIView):
     permission_classes = [IsProjectOwner]
 
     def update(self, request, *args, **kwargs):
-        obj = Project.objects.get(pk=self.kwargs['project_pk'])
-        invite_user = CustomUser.objects.get(pk=self.kwargs['user_pk'])
+        obj = Project.objects.get(pk=self.kwargs['pk'])
+        user_uuid = request.GET.get('uuid', None)
 
-        obj.invites.add(invite_user.pk)
-        obj.save()
+        if user_uuid:
+            invite_user = CustomUser.objects.get(user_uuid=user_uuid)
 
-        serializer = ProjectSerializer(obj, required=False)
+            obj.invites.add(invite_user.pk)
+            obj.save()
 
-        return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+            serializer = ProjectSerializer(obj, required=False)
+
+            return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+
+        return Response("You didn't give a user's uuid", status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProjectAPIConfirmInviteView(generics.UpdateAPIView):
