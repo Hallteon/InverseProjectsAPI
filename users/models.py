@@ -2,17 +2,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
-
-class Role(models.Model):
-    name = models.CharField(max_length=256, verbose_name='Роль')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Роль'
-        verbose_name_plural = 'Роли'
+import uuid
 
 
 class Skill(models.Model):
@@ -71,6 +61,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('role', 2)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -88,7 +79,7 @@ class CustomUser(AbstractUser):
     lastname = models.CharField(max_length=256, blank=True, verbose_name='Фамилия')
     bio = models.TextField(blank=True, verbose_name='Био')
     birthday = models.DateField(blank=True, null=True, verbose_name='День рождения')
-    role = models.ForeignKey('Role', blank=True, null=True, on_delete=models.DO_NOTHING, related_name='users', verbose_name='Роль')
+    role = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(2)], verbose_name='Роль')
     skills = models.ManyToManyField('Skill', related_name='users_skill', verbose_name='Навыки')
     experience = models.IntegerField(blank=True, default=0, verbose_name='Опыт')
     open = models.BooleanField(default=False, verbose_name='Открытый профиль')
@@ -96,6 +87,7 @@ class CustomUser(AbstractUser):
     achievements = models.ManyToManyField('Achievement', verbose_name='Достижения')
     organization = models.ForeignKey('Organization', blank=True, null=True, on_delete=models.CASCADE, related_name='users_organization', verbose_name='Организация')
     password = models.CharField(max_length=256, verbose_name='Пароль')
+    user_uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
 
     USERNAME_FIELD = 'username'
     EMAIL_FIELD = 'email'

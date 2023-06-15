@@ -3,19 +3,13 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.apps import apps
 from users.forms import UserChangeForm, UserCreationForm
-from users.models import CustomUser, Skill, Role, Achievement, Organization
+from users.models import CustomUser, Skill, Achievement, Organization
 
 
 class SkillAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'skill_type')
     list_filter = ('id', 'skill_type')
     search_fields = ('id', 'name', 'skill_type')
-
-
-class RoleAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    list_filter = ('name',)
-    search_fields = ('name',)
 
 
 class AchievementAdmin(admin.ModelAdmin):
@@ -34,7 +28,7 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open', 'contacts',
+    list_display = ('id', 'user_uuid', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'experience', 'open', 'contacts',
                     'organization', 'is_superuser')
     list_filter = ('is_superuser',)
     fieldsets = (
@@ -54,7 +48,6 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(Skill, SkillAdmin)
-admin.site.register(Role, RoleAdmin)
 admin.site.register(Achievement, AchievementAdmin)
 admin.site.register(Organization, OrganizationAdmin)
 admin.site.register(CustomUser, UserAdmin)

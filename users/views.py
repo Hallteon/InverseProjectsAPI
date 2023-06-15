@@ -11,13 +11,13 @@ class SkillAPIListCreateView(generics.ListCreateAPIView):
 
 
 class CustomUserAPIStudentsListView(generics.ListAPIView):
-    queryset = CustomUser.objects.filter(role__pk=1, open=True)
+    queryset = CustomUser.objects.filter(role=1, open=True)
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
 
 class CustomUserAPITeachersListView(generics.ListCreateAPIView):
-    queryset = CustomUser.objects.filter(role__pk=2)
+    queryset = CustomUser.objects.filter(role=2)
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 

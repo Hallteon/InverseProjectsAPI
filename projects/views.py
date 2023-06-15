@@ -71,10 +71,10 @@ class ProjectAPIConfirmInviteView(generics.UpdateAPIView):
         obj = Project.objects.get(pk=self.kwargs['pk'])
         invite_user = self.request.user
 
-        if invite_user.role.pk == 1:
+        if invite_user.role == 1:
             obj.members.add(invite_user.pk)
 
-        elif invite_user.role.pk == 2:
+        elif invite_user.role == 2:
             obj.mentor = invite_user
 
         obj.invites.remove(invite_user.pk)
