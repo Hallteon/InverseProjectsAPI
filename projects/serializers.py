@@ -4,6 +4,7 @@ from users.serializers import CustomUserSerializer
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    teamlead = CustomUserSerializer(required=False)
     members = CustomUserSerializer(many=True, required=False)
     mentor = CustomUserSerializer(required=False)
 
