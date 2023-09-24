@@ -1,38 +1,26 @@
 from rest_framework import permissions
+from projects.models import Project
 
 
-class IsProjectOwner(permissions.BasePermission):
+class IsTeamleadOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.user.is_authenticated:
-            if request.method in permissions.SAFE_METHODS:
-                return True
+        if request.method in permissions.SAFE_METHODS:
+            return True
 
-            return request.user.id == obj.teamlead.id
+        return request.user.pk == obj.teamlead.pk
+    
 
-        return False
-
-
-class IsProjectInviter(permissions.BasePermission):
+class IsTeamleadApplicationAcceptReject(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.user.is_authenticated:
-            if request.method in permissions.SAFE_METHODS:
-                return True
-
-            return request.user.id in obj.invites.all()
-
-        return False
+        return request.user.pk == obj.project.teamlead.pk
+    
 
 
-class IsProjectClosedMember(permissions.BasePermission):
+class IsTeamleadApplicationSend(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.pk == Project.objects.get(pk=request.data['project']).teamlead.pk
+    
+
+class IsRecieverApplicationAcceptReject(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.user.is_authenticated:
-            if (request.method in permissions.SAFE_METHODS and obj.open) or \
-                    (request.method in permissions.SAFE_METHODS and not obj.open and request.user.id in obj.members.all()):
-
-                return True
-
-            return request.user.id == obj.teamlead.id
-
-        return False
-
-
+        return request.user.pk == obj.user_to.pk

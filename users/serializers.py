@@ -1,39 +1,68 @@
 from djoser.serializers import UserCreateSerializer as BaseUserRegistrationSerializer
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from users.models import Skill, Achievement
+from users.models import *
+
+
+class ClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Class
+        fields = ('id', 'number', 'litera', 'faculty')
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    classes = ClassSerializer(many=True, required=False)
+
+    class Meta:
+        model = Organization
+        fields = ('id', 'name', 'description', 'address', 'classes')
+
+
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Speciality
+        fields = ('id', 'name')
 
 
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
-        fields = ('id', 'name', 'skill_type')
+        fields = ('id', 'name')
 
 
-class AchievementSerializer(serializers.ModelSerializer):
+class RoleSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Achievement
-        fields = ('id', 'title', 'achievement_type')
+        model = Role
+        fields = ('id', 'name', 'role_type')
 
 
 class UserRegistrationSerializer(BaseUserRegistrationSerializer):
+    cover = serializers.ImageField(required=False)
+
     class Meta(BaseUserRegistrationSerializer.Meta):
         model = get_user_model()
-        fields = ('username', 'password')
+        fields = ('username', 'cover', 'firstname', 'lastname', 'bio', 'speciality', 'skills', 'email', 'telegram', 'phone_number', 'role', 'school_class', 'organization', 'public', 'password')
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    skills = SkillSerializer(required=False, many=True)
-    achievements = AchievementSerializer(required=False, many=True)
+    cover = serializers.ImageField(required=False)
+    role = RoleSerializer(required=False)
+    speciality = SpecialitySerializer(required=False)
+    skills = SkillSerializer(many=True, required=False)
+    school_class = ClassSerializer(required=False)
 
     class Meta:
         model = get_user_model()
-        fields = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'skills', 'experience',
-                  'open', 'contacts', 'achievements', 'organization')
+        fields = ('id', 'username', 'cover', 'firstname', 'lastname', 'bio', 'speciality', 'skills', 'email', 'telegram', 'phone_number', 'role', 'school_class', 'organization', 'public')
 
 
 class CustomUserCurrentSerializer(serializers.ModelSerializer):
+    cover = serializers.ImageField(required=False)
+    role = RoleSerializer(required=False)
+    speciality = SpecialitySerializer(required=False)
+    skills = SkillSerializer(many=True, required=False)
+    school_class = ClassSerializer(required=False)
+
     class Meta:
         model = get_user_model()
-        fields = ('id', 'username', 'email', 'firstname', 'lastname', 'bio', 'birthday', 'role', 'skills', 'experience',
-                  'open', 'contacts', 'achievements', 'organization', 'user_uuid')
+        fields = ('id', 'username', 'cover', 'firstname', 'lastname', 'bio', 'speciality', 'skills', 'email', 'telegram', 'phone_number', 'role', 'school_class', 'organization', 'public')

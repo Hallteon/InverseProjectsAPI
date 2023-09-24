@@ -1,112 +1,209 @@
+from django.shortcuts import get_object_or_404
+from django.http import Http404, JsonResponse
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, exceptions
 from rest_framework.response import Response
+from projects.permissions import IsRecieverApplicationAcceptReject, IsTeamleadApplicationAcceptReject, IsTeamleadApplicationSend, IsTeamleadOrReadOnly
+from projects.serializers import *
 from projects.models import Project
-from projects.permissions import IsProjectOwner, IsProjectInviter, IsProjectClosedMember
-from projects.serializers import ProjectSerializer
-from users.models import CustomUser
 
 
-class ProjectAPIListCreateView(generics.ListCreateAPIView):
-    serializer_class = ProjectSerializer
+class ProjectAPICreateView(generics.CreateAPIView):
+    serializer_class = ProjectWriteSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Project.objects.filter(open=True, organization=self.request.user.organization.pk)
-
     def post(self, request, *args, **kwargs):
-        serializer = ProjectSerializer(data=request.data)
+        serializer = ProjectWriteSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            project = Project.objects.get(pk=serializer.data['id'])
+            instance = Project.objects.get(pk=serializer.data['id'])
+            instance.members.add(instance.teamlead.pk)
+            instance.save()
 
-            project.organization = self.request.user.organization
-            project.members.add(self.request.user.id)
-            project.save()
+            return Response(serializer.data, status=201)
+        
+        return Response(serializer.errors, status=400)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class ProjectAPIListView(generics.ListAPIView):
+    serializer_class = ProjectReadListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(approved=True)
+    
 
 class ProjectAPIMyListView(generics.ListAPIView):
-    serializer_class = ProjectSerializer
+    serializer_class = ProjectReadDetailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(members__id=self.request.user.id)
-
+        return Project.objects.filter(members__in=self.request.user.pk)
+    
 
 class ProjectAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [IsProjectClosedMember]
+    queryset = Project.objects.all()
+    serializer_class = ProjectWriteSerializer
+    permission_classes = [IsAuthenticated, IsTeamleadOrReadOnly]
 
-    def get_queryset(self):
-        return Project.objects.filter(organization=self.request.user.organization.pk)
+    def get(self, request, *args, **kwargs):
+        if self.kwargs['pk']:
+            project = Project.objects.get(pk=self.kwargs['pk'])
+            serializer = ProjectReadDetailSerializer(project)
+                
+            return Response(serializer.data)
+    
+        return Response([], status=status.HTTP_404_NOT_FOUND)
 
 
-class ProjectAPIMyInvitesView(generics.ListAPIView):
-    serializer_class = ProjectSerializer
+class VacancyAPICreateView(generics.CreateAPIView):
+    serializer_class = VacancyWriteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = VacancyWriteSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            project = Project.objects.get(pk=self.kwargs['pk'])
+
+            if self.request.user.pk == project.teamlead.pk:
+                project.vacancies.add(serializer.data['id'])
+                project.save()
+
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            else:
+                return Response('У вас недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class BranchAPIListView(generics.ListAPIView):
+    serializer_class = BranchSerializer
+    permission_classes = [IsAuthenticated]
+    
+
+class IncomingApplicationAPICreateView(generics.CreateAPIView):
+    serializer_class = IncomingApplicationWriteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = IncomingApplicationWriteSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            project = Project.objects.get(pk=serializer.data['project'])
+            project.incoming_applications.add(serializer.data['id'])
+            project.save()
+
+            return Response(serializer.data, status=201)
+        
+        return Response(serializer.errors, status=400)
+    
+
+class IncomingApplicationAPIListView(generics.ListAPIView):
+    serializer_class = IncomingApplicationReadSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(invites__id=self.request.user.id)
+        return IncomingApplication.objects.filter(project__teamlead=self.request.user.pk)
+    
 
+class IncomingApplicationAPIAcceptView(generics.DestroyAPIView):
+    queryset = IncomingApplication.objects.all()
+    serializer_class = IncomingApplicationWriteSerializer
+    permission_classes = [IsAuthenticated, IsTeamleadApplicationAcceptReject]
 
-class ProjectAPISendInviteView(generics.UpdateAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [IsProjectOwner]
+    def destroy(self, request, *args, **kwargs):
+        try:
+            obj = self.get_object()
 
-    def update(self, request, *args, **kwargs):
-        obj = Project.objects.get(pk=self.kwargs['pk'])
-        user_uuid = request.GET.get('uuid', None)
+            if not Project.objects.filter(pk=obj.project.pk, members__user=obj.user_from):
+                vacancy = obj.vacancy
+                vacancy.open = False
+                vacancy.save()
 
-        if user_uuid:
-            invite_user = CustomUser.objects.get(user_uuid=user_uuid)
+                member = Member.objects.create(user=obj.user_from, vacancy=vacancy)
 
-            if invite_user.organization.pk == obj.organization.pk:
-                obj.invites.add(invite_user.pk)
-                obj.save()
+                project = obj.project
+                project.members.add(member.pk)
+                project.vacancies.remove(member.vacancy.pk)
+                project.save()
 
-                serializer = ProjectSerializer(obj, required=False)
+            self.perform_destroy(obj)
 
-                return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+        except Http404:
+            pass
 
-        return Response("Something went wrong!", status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 
+class IncomingApplicationAPIRejectView(generics.DestroyAPIView):
+    queryset = IncomingApplication.objects.all()
+    serializer_class = IncomingApplicationWriteSerializer
+    permission_classes = [IsAuthenticated, IsTeamleadApplicationAcceptReject]
+    
 
-class ProjectAPIConfirmInviteView(generics.UpdateAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [IsProjectInviter]
+class OutgoingApplicationAPICreateView(generics.CreateAPIView):
+    serializer_class = OutgoingApplicationWriteSerializer
+    permission_classes = [IsAuthenticated, IsTeamleadApplicationSend]
 
-    def update(self, request, *args, **kwargs):
-        obj = Project.objects.get(pk=self.kwargs['pk'])
-        invite_user = self.request.user
+    def post(self, request, *args, **kwargs):
+        serializer = OutgoingApplicationWriteSerializer(data=request.data)
 
-        if invite_user.role == 1:
-            obj.members.add(invite_user.pk)
+        if serializer.is_valid():
+            serializer.save()
+            project = Project.objects.get(pk=serializer.data['project'])
+            project.outgoing_applications.add(serializer.data['id'])
+            project.save()
 
-        elif invite_user.role == 2:
-            obj.mentor = invite_user
+            return Response(serializer.data, status=201)
+        
+        return Response(serializer.errors, status=400)
+    
 
-        obj.invites.remove(invite_user.pk)
-        obj.save()
+class OutgoingApplicationAPIListView(generics.ListAPIView):
+    serializer_class = OutgoingApplicationReadSerializer
+    permission_classes = [IsAuthenticated]
 
-        serializer = ProjectSerializer(obj, required=False)
+    def get_queryset(self):
+        return OutgoingApplication.objects.filter(user_to=self.request.user.pk)
+    
 
-        return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+class OutgoingApplicationAPIAcceptView(generics.DestroyAPIView):
+    queryset = OutgoingApplication.objects.all()
+    serializer_class = OutgoingApplicationWriteSerializer
+    permission_classes = [IsAuthenticated, IsRecieverApplicationAcceptReject]
 
+    def destroy(self, request, *args, **kwargs):
+        try:
+            obj = self.get_object()
 
-class ProjectAPIRejectInviteView(generics.UpdateAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [IsProjectInviter]
+            if not Project.objects.filter(pk=obj.project.pk, members__user=obj.user_to):
+                vacancy = obj.vacancy
+                vacancy.open = False
+                vacancy.save()
 
-    def update(self, request, *args, **kwargs):
-        obj = Project.objects.get(pk=self.kwargs['pk'])
-        invite_user = self.request.user
+                member = Member.objects.create(user=obj.user_to, vacancy=vacancy)
 
-        obj.invites.remove(invite_user.pk)
-        obj.save()
+                project = obj.project
+                project.members.add(member.pk)
+                project.vacancies.remove(member.vacancy.pk)
+                project.save()
 
-        serializer = ProjectSerializer(obj, required=False)
+            self.perform_destroy(obj)
 
-        return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+        except Http404:
+            pass
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+class OutgoingApplicationAPIRejectView(generics.DestroyAPIView):
+    queryset = OutgoingApplication.objects.all()
+    serializer_class = OutgoingApplicationWriteSerializer
+    permission_classes = [IsAuthenticated, IsRecieverApplicationAcceptReject]
+    
+
